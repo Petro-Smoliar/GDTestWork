@@ -1,28 +1,29 @@
-using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
+using TMPro;
 using UnityEngine;
-using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 public class SceneManager : MonoBehaviour
 {
     public static SceneManager Instance;
-
+    
     public Player Player;
     public List<Enemie> Enemies;
     public GameObject Lose;
     public GameObject Win;
+    public Button AttackButton;
+    public EnemiesFactory EnemiesFactory;
+    public Button SuperAttackButton;
+    [SerializeField]
+    private TMP_Text TextWave;
 
     private int currWave = 0;
     [SerializeField] private LevelConfig Config;
 
-    private void Awake()
+    public void Reset()
     {
-        Instance = this;
-    }
-
-    private void Start()
-    {
-        SpawnWave();
+        UnityEngine.SceneManagement.SceneManager.LoadScene(0);
     }
 
     public void AddEnemie(Enemie enemie)
@@ -42,6 +43,21 @@ public class SceneManager : MonoBehaviour
     public void GameOver()
     {
         Lose.SetActive(true);
+        Player.GetComponent<PlayerAttackController>().enabled = false;
+        Player.GetComponent<PlayerMoveController>().enabled = false;
+        AttackButton.gameObject.SetActive(false);
+        SuperAttackButton.gameObject.SetActive(false);
+    }
+
+    private void Awake()
+    {
+        Instance = this;
+    }
+
+    private void Start()
+    {
+        SpawnWave();
+        
     }
 
     private void SpawnWave()
@@ -53,19 +69,24 @@ public class SceneManager : MonoBehaviour
         }
 
         var wave = Config.Waves[currWave];
-        foreach (var character in wave.Characters)
+        for (int i = 0; i < wave.countEnemy; i++)
         {
             Vector3 pos = new Vector3(Random.Range(-10, 10), 0, Random.Range(-10, 10));
-            Instantiate(character, pos, Quaternion.identity);
+            EnemiesFactory.SpawnEnemy(pos);
         }
+
+        for (int i = 0; i < wave.countBigEnemy; i++)
+        {
+            Vector3 pos = new Vector3(Random.Range(-10, 10), 0, Random.Range(-10, 10));
+            EnemiesFactory.SpawnBigEnemy(pos);
+        }
+
+        UpdateTextWave();
         currWave++;
-
     }
 
-    public void Reset()
+    private void UpdateTextWave()
     {
-        UnityEngine.SceneManagement.SceneManager.LoadScene(0);
+        TextWave.text = $"Wave {currWave + 1}/{Config.Waves.Count()}";
     }
-    
-
 }
